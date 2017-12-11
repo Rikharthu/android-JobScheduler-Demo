@@ -119,6 +119,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
     @OnClick(R.id.schedule_firebase_job_btn)
     void onScheduleFirebaseJob() {
+        Timber.d("Scheduling firebase job");
         Bundle myExtrasBundle = new Bundle();
         myExtrasBundle.putString("some_key", "some_value");
 
