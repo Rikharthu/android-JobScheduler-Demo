@@ -52,7 +52,7 @@ public class MyJobService extends JobService {
         manager.notify(0, builder.build());
 
         Timber.d("Finishing job");
-        return false;
+        return false; // Answers the question: "Is there still work going on?"
     }
 
     // Called by the system if the job is cancelled before it finishes
@@ -61,6 +61,6 @@ public class MyJobService extends JobService {
     public boolean onStopJob(JobParameters jobParameters) {
         // Cancel ongoing job
         Timber.d("Stopping job");
-        return false;
+        return false; // Answers the question: "Should this job be retried?"
     }
 }
