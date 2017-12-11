@@ -12,6 +12,14 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.firebase.jobdispatcher.Constraint;
+import com.firebase.jobdispatcher.FirebaseJobDispatcher;
+import com.firebase.jobdispatcher.GooglePlayDriver;
+import com.firebase.jobdispatcher.Job;
+import com.firebase.jobdispatcher.Lifetime;
+import com.firebase.jobdispatcher.RetryStrategy;
+import com.firebase.jobdispatcher.Trigger;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
@@ -32,6 +40,7 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
     @BindView(R.id.deadline_seekbar)
     SeekBar mDeadlineSeekbar;
     private JobScheduler mScheduler;
+    private FirebaseJobDispatcher mDispatcher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,6 +50,10 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
 
         // Retrieve JobScheduler from the system
         mScheduler = (JobScheduler) getSystemService(Context.JOB_SCHEDULER_SERVICE);
+
+        // FirebaseJobDispatcher is an alternative to JobScheduler for low APIs
+        // Or create a new dispatcher using the Google Play driver.
+        mDispatcher = new FirebaseJobDispatcher(new GooglePlayDriver(this));
 
         mDeadlineSeekbar.setOnSeekBarChangeListener(this);
     }
@@ -100,6 +113,41 @@ public class MainActivity extends AppCompatActivity implements SeekBar.OnSeekBar
     void onCancelJobs() {
         mScheduler.cancelAll();
         Toast.makeText(this, "Jobs canceled", Toast.LENGTH_SHORT).show();
+
+        mDispatcher.cancelAll();
+    }
+
+    @OnClick(R.id.schedule_firebase_job_btn)
+    void onScheduleFirebaseJob() {
+        Bundle myExtrasBundle = new Bundle();
+        myExtrasBundle.putString("some_key", "some_value");
+
+        Job myJob = mDispatcher.newJobBuilder()
+                // the JobService that will be called
+                .setService(FirebaseJobService.class)
+                // uniquely identifies the job
+                .setTag("my-unique-tag")
+                // one-off job
+                .setRecurring(false)
+                // don't persist past a device reboot
+                .setLifetime(Lifetime.UNTIL_NEXT_BOOT)
+                // start between 0 and 60 seconds from now
+                .setTrigger(Trigger.executionWindow(0, 60))
+                // don't overwrite an existing job with the same tag
+                .setReplaceCurrent(false)
+                // retry with exponential backoff
+                .setRetryStrategy(RetryStrategy.DEFAULT_EXPONENTIAL)
+                // constraints that need to be satisfied for the job to run
+                .setConstraints(
+                        // only run on an unmetered network
+                        Constraint.ON_UNMETERED_NETWORK,
+                        // only run when the device is charging
+                        Constraint.DEVICE_CHARGING
+                )
+                .setExtras(myExtrasBundle)
+                .build();
+
+        mDispatcher.mustSchedule(myJob);
     }
 
     @Override

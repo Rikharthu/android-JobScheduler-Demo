@@ -2,4 +2,5 @@
     <string name="app_name">JobScheduler Demo</string>
     <string name="job_service">My Job Service</string>
     <string name="job_running">Executing a job</string>
+    <string name="firebase_job_service">Firebase Job Service</string>
 </resources>
